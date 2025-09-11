@@ -14,10 +14,10 @@ workflows:
       - name: Install CocoaPods
         script: |
           cd ios
-          pod install --repo-update
+          pod install --repo-update || pod install
           cd ..
 
-      - name: Patch Info.plist
+      - name: Ensure Info.plist values
         script: |
           PLIST="ios/CoreArsitek/Info.plist"
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName CoreArsitek" $PLIST || true
@@ -26,9 +26,15 @@ workflows:
 
       - name: Build iOS IPA
         script: |
-          xcode-project build-ipa \
-            --workspace ios/CoreArsitek.xcworkspace \
-            --scheme CoreArsitek
+          if [ -d "ios/CoreArsitek.xcworkspace" ]; then
+            xcode-project build-ipa \
+              --workspace ios/CoreArsitek.xcworkspace \
+              --scheme CoreArsitek
+          else
+            xcode-project build-ipa \
+              --project ios/CoreArsitek.xcodeproj \
+              --scheme CoreArsitek
+          fi
 
     artifacts:
       - build/ios/ipa/*.ipa
